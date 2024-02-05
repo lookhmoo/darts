@@ -58,6 +58,7 @@ class _TFTModule(PLMixedCovariatesModule):
         dropout: float,
         add_relative_index: bool,
         norm_type: Union[str, nn.Module],
+        linear_attention: bool,
         **kwargs,
     ):
 
@@ -125,6 +126,7 @@ class _TFTModule(PLMixedCovariatesModule):
         self.feed_forward = feed_forward
         self.dropout = dropout
         self.add_relative_index = add_relative_index
+        self.linear_attention = linear_attention
 
         if isinstance(norm_type, str):
             try:
@@ -296,6 +298,7 @@ class _TFTModule(PLMixedCovariatesModule):
             d_model=self.hidden_size,
             n_head=self.num_attention_heads,
             dropout=self.dropout,
+            linear_attention=self.linear_attention,
         )
         self.post_attn_gan = _GateAddNorm(
             self.hidden_size, dropout=self.dropout, layer_norm=self.layer_norm
@@ -674,6 +677,7 @@ class TFTModel(MixedCovariatesTorchModel):
         likelihood: Optional[Likelihood] = None,
         norm_type: Union[str, nn.Module] = "LayerNorm",
         use_static_covariates: bool = True,
+        linear_attention: bool = True,
         **kwargs,
     ):
         """Temporal Fusion Transformers (TFT) for Interpretable Time Series Forecasting.
@@ -957,6 +961,7 @@ class TFTModel(MixedCovariatesTorchModel):
         self.add_relative_index = add_relative_index
         self.output_dim: Optional[Tuple[int, int]] = None
         self.norm_type = norm_type
+        self.linear_attention = linear_attention
         self._considers_static_covariates = use_static_covariates
 
     def _create_model(self, train_sample: MixedCovariatesTrainTensorType) -> nn.Module:
@@ -1147,6 +1152,7 @@ class TFTModel(MixedCovariatesTorchModel):
             categorical_embedding_sizes=self.categorical_embedding_sizes,
             add_relative_index=self.add_relative_index,
             norm_type=self.norm_type,
+            linear_attention=self.linear_attention
             **self.pl_module_params,
         )
 

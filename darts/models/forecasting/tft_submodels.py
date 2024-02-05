@@ -507,7 +507,7 @@ class _VariableSelectionNetwork(nn.Module):
 
 
 class _ScaledDotProductAttention(nn.Module):
-    def __init__(self, dropout: float = None, scale: bool = True):
+    def __init__(self, dropout: float = None, scale: bool = True, linear_attention: bool = False):
         super().__init__()
         if dropout is not None:
             self.dropout = MonteCarloDropout(p=dropout)
@@ -515,9 +515,14 @@ class _ScaledDotProductAttention(nn.Module):
             self.dropout = dropout
         self.softmax = nn.Softmax(dim=2)
         self.scale = scale
+        self.linear_attention = linear_attention
 
     def forward(self, q, k, v, mask=None):
-        attn = torch.bmm(q, k.permute(0, 2, 1))  # query-key overlap
+
+        if self.linear_attention:
+            attn = torch.bmm(q.permute(0, 2, 1), k)
+        else: 
+            attn = torch.bmm(q, k.permute(0, 2, 1))  # query-key overlap
 
         if self.scale:
             dimension = torch.sqrt(torch.tensor(k.shape[-1]).to(torch.float32))
@@ -534,13 +539,14 @@ class _ScaledDotProductAttention(nn.Module):
 
 
 class _InterpretableMultiHeadAttention(nn.Module):
-    def __init__(self, n_head: int, d_model: int, dropout: float = 0.0):
+    def __init__(self, n_head: int, d_model: int, dropout: float = 0.0, linear_attention: bool = False):
         super().__init__()
 
         self.n_head = n_head
         self.d_model = d_model
         self.d_k = self.d_q = self.d_v = d_model // n_head
         self.dropout = MonteCarloDropout(p=dropout)
+        self.linear_attention = linear_attention
 
         self.v_layer = nn.Linear(self.d_model, self.d_v)
         self.q_layers = nn.ModuleList(
@@ -549,7 +555,7 @@ class _InterpretableMultiHeadAttention(nn.Module):
         self.k_layers = nn.ModuleList(
             [nn.Linear(self.d_model, self.d_k) for _ in range(self.n_head)]
         )
-        self.attention = _ScaledDotProductAttention()
+        self.attention = _ScaledDotProductAttention(linear_attention = self.linear_attention)
         self.w_h = nn.Linear(self.d_v, self.d_model, bias=False)
 
         self.init_weights()
