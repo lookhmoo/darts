@@ -547,7 +547,7 @@ class _ScaledDotProductAttentionT(nn.Module):
     def forward(self, q, k, v, mask=None):
 
         # torch.transpose(x, 0, 1)
-        attn = torch.bmm(torch.transpose(q, 0, 1), k)  # query-key overlap
+        attn = torch.bmm(k, torch.transpose(q, 0, 1))  # query-key overlap
 
         if self.scale:
             dimension = torch.sqrt(torch.tensor(k.shape[-1]).to(torch.float32))
