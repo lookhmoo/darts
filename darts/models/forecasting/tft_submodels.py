@@ -546,7 +546,8 @@ class _ScaledDotProductAttentionT(nn.Module):
         
     def forward(self, q, k, v, mask=None):
 
-        attn = torch.bmm(q.permute(0, 2, 1), k)  # query-key overlap
+        # torch.transpose(x, 0, 1)
+        attn = torch.bmm(torch.transpose(q, 0, 1), k)  # query-key overlap
 
         if self.scale:
             dimension = torch.sqrt(torch.tensor(k.shape[-1]).to(torch.float32))
@@ -579,7 +580,7 @@ class _InterpretableMultiHeadAttention(nn.Module):
         self.k_layers = nn.ModuleList(
             [nn.Linear(self.d_model, self.d_k) for _ in range(self.n_head)]
         )
-        
+
         if self.linear_attention:
             self.attention = _ScaledDotProductAttentionT()
         else:
