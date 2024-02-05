@@ -128,6 +128,8 @@ class _TFTModule(PLMixedCovariatesModule):
         self.add_relative_index = add_relative_index
         self.linear_attention = linear_attention
 
+        print("_TFTModule",self.linear_attention)
+
         if isinstance(norm_type, str):
             try:
                 self.layer_norm = getattr(layer_norm_variants, norm_type)
@@ -1137,7 +1139,7 @@ class TFTModel(MixedCovariatesTorchModel):
         )
 
         self.categorical_embedding_sizes = categorical_embedding_sizes
-
+        print(self.linear_attention)
         return _TFTModule(
             output_dim=self.output_dim,
             variables_meta=variables_meta,
